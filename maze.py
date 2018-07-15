@@ -2,13 +2,9 @@
 import numpy as np 
 import turtle
 
-
-
-
-
 class Maze(object):
 
-    def __init__(self, maze, grid_height, grid_width):
+    def __init__(self, grid_height, grid_width, maze = None, height = None, width = None, wall_prob = None, random_seed = None):
         '''
         maze: 2D numpy array. 
         passages are coded as a 4-bit number, with a bit value taking 
@@ -19,16 +15,19 @@ class Maze(object):
         and 8s register the left edge. 
         (numpy array)
         '''
-        self.maze = maze
-        self.height = maze.shape[0]
-        self.width = maze.shape[1]
         self.grid_height = grid_height
         self.grid_width = grid_width
-        self.fix_maze_boundary()
-        self.fix_wall_inconsistency()
 
-        #https://docs.python.org/3.0/library/turtle.html#turtle.setworldcoordinates
-        turtle.setworldcoordinates(0, self.height * self.grid_height * 1.005, self.width * self.grid_width * 1.005, 0)
+        if maze is not None:
+            self.maze = maze
+            self.height = maze.shape[0]
+            self.width = maze.shape[1]
+            self.fix_maze_boundary()
+            self.fix_wall_inconsistency()
+        else:
+            assert height is not None and width is not None and wall_prob is not None, 'Parameters for random maze should not be None.' 
+            self.random_maze(height = height, width = width, wall_prob = wall_prob, random_seed = random_seed)
+
 
     def check_wall_inconsistency(self):
 
@@ -77,6 +76,25 @@ class Maze(object):
         for j in range(self.width):
             self.maze[0,j] |= 1
             self.maze[-1,j] |= 4
+
+    def random_maze(self, height, width, wall_prob, random_seed = None):
+
+        if random_seed is not None:
+            np.random.seed(0)
+        self.height = height
+        self.width = width
+        self.maze = np.zeros((height, width), dtype = np.int8)
+        for i in range(self.height):
+            for j in range(self.width-1):
+                if np.random.rand() < wall_prob:
+                    self.maze[i,j] |= 2
+        for i in range(self.height-1):
+            for j in range(self.width):
+                if np.random.rand() < wall_prob:
+                    self.maze[i,j] |= 4
+
+        self.fix_maze_boundary()
+        self.fix_wall_inconsistency()
 
     def permissibilities(self, cell):
         '''
@@ -127,6 +145,8 @@ class Maze(object):
         return (d1, d2, d3, d4)
 
     def show(self):
+
+        turtle.setworldcoordinates(0, self.height * self.grid_height * 1.005, self.width * self.grid_width * 1.005, 0)
 
         wally = turtle.Turtle()
         wally.speed(0)
@@ -179,9 +199,10 @@ if __name__ == '__main__':
     window = turtle.Screen()
     window.setup (width = 600, height = 600)
 
-    maze = np.array([[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15],[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15]])
+    #maze = np.array([[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15],[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15]])
     #maze = np.array([[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15]])
-    world = Maze(maze = maze, grid_height = 50, grid_width = 50)
+    #world = Maze(maze = maze, grid_height = 50, grid_width = 50)
+    world = Maze(grid_height = 10, grid_width = 10, height = 30, width = 30, wall_prob = 0.4, random_seed = 0)
     world.show()
     window.exitonclick()
 
