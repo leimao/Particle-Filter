@@ -4,7 +4,7 @@ import turtle
 
 class Maze(object):
 
-    def __init__(self, grid_height, grid_width, maze = None, height = None, width = None, wall_prob = None, random_seed = None):
+    def __init__(self, grid_height, grid_width, maze = None, num_rows = None, num_cols = None, wall_prob = None, random_seed = None):
         '''
         maze: 2D numpy array. 
         passages are coded as a 4-bit number, with a bit value taking 
@@ -20,39 +20,47 @@ class Maze(object):
 
         if maze is not None:
             self.maze = maze
-            self.height = maze.shape[0]
-            self.width = maze.shape[1]
+            self.num_rows = maze.shape[0]
+            self.num_cols = maze.shape[1]
             self.fix_maze_boundary()
             self.fix_wall_inconsistency()
         else:
-            assert height is not None and width is not None and wall_prob is not None, 'Parameters for random maze should not be None.' 
-            self.random_maze(height = height, width = width, wall_prob = wall_prob, random_seed = random_seed)
+            assert num_rows is not None and num_cols is not None and wall_prob is not None, 'Parameters for random maze should not be None.' 
+            self.random_maze(num_rows = num_rows, num_cols = num_cols, wall_prob = wall_prob, random_seed = random_seed)
 
+        self.height = self.num_rows * self.grid_height
+        self.width = self.num_cols * self.grid_width
+
+        self.turtle_registration()
+
+    def turtle_registration(self):
+
+        turtle.register_shape('tri', ((-3, -2), (0, 3), (3, -2), (0, 0)))
 
     def check_wall_inconsistency(self):
 
         wall_errors = list()
 
         # Check vertical walls
-        for i in range(self.height):
-            for j in range(self.width-1):
+        for i in range(self.num_rows):
+            for j in range(self.num_cols-1):
                 if (self.maze[i,j] & 2 != 0) != (self.maze[i,j+1] & 8 != 0):
                     wall_errors.append(((i,j), 'v'))
         # Check horizonal walls
-        for i in range(self.height-1):
-            for j in range(self.width):
+        for i in range(self.num_rows-1):
+            for j in range(self.num_cols):
                 if (self.maze[i,j] & 4 != 0) != (self.maze[i+1,j] & 1 != 0):
                     wall_errors.append(((i,j), 'h'))
 
         return wall_errors
 
-    def fix_wall_inconsistency(self):
+    def fix_wall_inconsistency(self, verbose = True):
         '''
         Whenever there is a wall inconsistency, put a wall there.
         '''
         wall_errors = self.check_wall_inconsistency()
 
-        if wall_errors:
+        if wall_errors and verbose:
             print('Warning: maze contains wall inconsistency.')
 
         for (i,j), error in wall_errors:
@@ -70,31 +78,31 @@ class Maze(object):
         '''
         Make sure that the maze is bounded.
         '''
-        for i in range(self.height):
+        for i in range(self.num_rows):
             self.maze[i,0] |= 8
             self.maze[i,-1] |= 2
-        for j in range(self.width):
+        for j in range(self.num_cols):
             self.maze[0,j] |= 1
             self.maze[-1,j] |= 4
 
-    def random_maze(self, height, width, wall_prob, random_seed = None):
+    def random_maze(self, num_rows, num_cols, wall_prob, random_seed = None):
 
         if random_seed is not None:
             np.random.seed(0)
-        self.height = height
-        self.width = width
-        self.maze = np.zeros((height, width), dtype = np.int8)
-        for i in range(self.height):
-            for j in range(self.width-1):
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.maze = np.zeros((num_rows, num_cols), dtype = np.int8)
+        for i in range(self.num_rows):
+            for j in range(self.num_cols-1):
                 if np.random.rand() < wall_prob:
                     self.maze[i,j] |= 2
-        for i in range(self.height-1):
-            for j in range(self.width):
+        for i in range(self.num_rows-1):
+            for j in range(self.num_cols):
                 if np.random.rand() < wall_prob:
                     self.maze[i,j] |= 4
 
         self.fix_maze_boundary()
-        self.fix_wall_inconsistency()
+        self.fix_wall_inconsistency(verbose = False)
 
     def permissibilities(self, cell):
         '''
@@ -144,9 +152,9 @@ class Maze(object):
 
         return (d1, d2, d3, d4)
 
-    def show(self):
+    def show_maze(self):
 
-        turtle.setworldcoordinates(0, self.height * self.grid_height * 1.005, self.width * self.grid_width * 1.005, 0)
+        turtle.setworldcoordinates(0, self.height * 1.005, self.width * 1.005, 0)
 
         wally = turtle.Turtle()
         wally.speed(0)
@@ -154,9 +162,8 @@ class Maze(object):
         wally.hideturtle()
         turtle.tracer(0, 0)
 
-
-        for i in range(self.height):
-            for j in range(self.width):
+        for i in range(self.num_rows):
+            for j in range(self.num_cols):
                 permissibilities = self.permissibilities(cell = (i,j))
                 turtle.up()
                 wally.setposition((j * self.grid_width, i * self.grid_height))
@@ -192,6 +199,70 @@ class Maze(object):
                 wally.up()
 
 
+    def weight_to_color(self, weight):
+
+        return "#%02x00%02x" % (int(weight * 255), int((1 - weight) * 255))
+
+
+    def show_particles(self, particles):
+
+        # Clear the particle stamps from the last update
+        turtle.clearstamps()
+        turtle.shape('tri')
+
+        for particle in particles:
+            turtle.setposition((particle.x, particle.y))
+            turtle.setheading(90 + particle.heading)
+            turtle.color(self.weight_to_color(particle.weight))
+            turtle.stamp()
+
+
+
+class Particle(object):
+
+    def __init__(self, x, y, heading = None, weight = 1, noisy = False):
+
+        if heading is None:
+            heading = np.random.uniform(0,360)
+
+        self.x = x
+        self.y = y
+        self.heading = heading
+        self.weight = weight
+
+    @property
+    def state(self):
+
+        return (self.x, self.y, self.heading)
+
+    def read_sensor(self, maze):
+
+        return maze.distance_to_walls(coordinates = (self.x, self.y))
+
+    def move(self, dx, dy):
+        self.x += dx
+        self.y += dy
+
+    def try_move(self, speed, validate_move = None, noisy = False):
+
+        heading = self.heading
+        heading_rad = np.radians(heading)
+
+        dx = np.sin(heading_rad) * speed
+        dy = np.cos(heading_rad) * speed
+
+        x = self.x + dx
+        y = self.y + dy
+
+        if validate_move is None or validate_move(x, y):
+            self.x = x
+            self.y = y
+            return True
+        else:
+            return False
+
+
+
 
 
 if __name__ == '__main__':
@@ -202,8 +273,22 @@ if __name__ == '__main__':
     #maze = np.array([[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15],[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15]])
     #maze = np.array([[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15]])
     #world = Maze(maze = maze, grid_height = 50, grid_width = 50)
-    world = Maze(grid_height = 10, grid_width = 10, height = 30, width = 30, wall_prob = 0.4, random_seed = 0)
-    world.show()
+    world = Maze(grid_height = 50, grid_width = 50, num_rows = 30, num_cols = 30, wall_prob = 0.4, random_seed = 0)
+
+
+    particles = list()
+    for i in range(100):
+        x = np.random.uniform(0, world.width)
+        y = np.random.uniform(0, world.height)
+        particles.append(Particle(x = x, y = y))
+
+
+
+
+
+
+    world.show_maze()
+    world.show_particles(particles = particles)
     window.exitonclick()
 
 
