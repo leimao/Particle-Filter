@@ -216,6 +216,18 @@ class Maze(object):
             turtle.color(self.weight_to_color(particle.weight))
             turtle.stamp()
 
+    def show_robot(self, robot):
+        turtle.clearstamps()
+        turtle.color("green")
+        turtle.shape('turtle')
+        turtle.shapesize(0.7, 0.7)
+        turtle.setposition((robot.x, robot.y))
+        turtle.setheading(90 + robot.heading)
+        turtle.stamp()
+        turtle.update()
+
+
+
 
 
 class Particle(object):
@@ -239,11 +251,13 @@ class Particle(object):
 
         return maze.distance_to_walls(coordinates = (self.x, self.y))
 
+    '''
     def move(self, dx, dy):
         self.x += dx
         self.y += dy
+    '''
 
-    def try_move(self, speed, validate_move = None, noisy = False):
+    def try_move(self, speed, maze, noisy = False):
 
         heading = self.heading
         heading_rad = np.radians(heading)
@@ -254,12 +268,112 @@ class Particle(object):
         x = self.x + dx
         y = self.y + dy
 
-        if validate_move is None or validate_move(x, y):
+        gj1 = int(self.x // maze.grid_width)
+        gi1 = int(self.y // maze.grid_height)
+        gj2 = int(x // maze.grid_width)
+        gi2 = int(y // maze.grid_height)
+
+        # Check if the particle is still in the maze
+        if gi2 < 0 or gi2 >= maze.num_rows or gj2 < 0 or gj2 >= maze.num_cols:
+            return False
+
+        # Move in the same grid
+        if gi1 == gi2 and gj1 == gj2:
             self.x = x
             self.y = y
             return True
+        # Move across one grid vertically
+        elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 0:
+            if maze.maze[min(gi1, gi2), gj1] & 4 != 0:
+                return False
+            else:
+                self.x = x
+                self.y = y
+                return True
+        # Move across one grid horizonally
+        elif abs(gi1 - gi2) == 0 and abs(gj1 - gj2) == 1:
+            if maze.maze[gi1, min(gj1, gj2)] & 2 != 0:
+                return False
+            else:
+                self.x = x
+                self.y = y
+                return True
+        # Move across grids both vertically and horizonally
+        elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 1:
+
+            x0 = max(gj1, gj2) * maze.grid_width
+            y0 = (y - self.y) / (x - self.x) * (x0 - self.x) + self.y
+
+            if maze.maze[int(y0 // maze.grid_height), min(gj1, gj2)] & 2 != 0:
+                return False
+
+            y0 = max(gi1, gi2) * maze.grid_height
+            x0 = (x - self.x) / (y - self.y) * (y0 - self.y) + self.x
+
+            if maze.maze[min(gi1, gi2), int(x0 // maze.grid_width)] & 4 != 0:
+                return False
+
+            self.x = x
+            self.y = y
+            return True
+
         else:
-            return False
+            raise Exception('Unexpected collision detection.')
+
+
+
+class Robot(Particle):
+
+    def __init__(self, x, y, heading = None, speed = 0.3, noisy = False):
+
+        super(Robot, self).__init__(x = x, y = y, heading = heading, noisy = noisy)
+        self.step_count = 0
+        self.noisy = noisy
+        self.time_step = 0
+        self.speed = speed
+
+    def choose_random_direction(self):
+
+        self.heading = np.random.uniform(0, 360)
+
+    def add_sensor_noise(self, x):
+
+        if not noisy:
+            return x
+
+        readings = list(x)
+        for i in range(len(readings)):
+            mu = readings[i]
+            std = readings[i] * 0.05 / 2
+            readings[i] = np.random.normal(mu, sigma)
+
+        readings = tuple(readings)
+
+        return readings
+
+    def read_sensor(self, maze, add_noise):
+
+        # Robot has error in reading the sensor while particles do not.
+        readings = maze.distance_to_walls(coordinates = (self.x, self.y))
+        readings_noisy = self.add_sensor_noise(x = readings)
+
+        return readings_noisy
+
+    def move(self, maze):
+
+
+        while True:
+            self.time_step += 1
+            if self.try_move(speed = self.speed, maze = maze, noisy = False):
+                break
+            self.choose_random_direction()
+
+
+
+
+
+
+
 
 
 
@@ -268,28 +382,36 @@ class Particle(object):
 if __name__ == '__main__':
     
     window = turtle.Screen()
-    window.setup (width = 600, height = 600)
+    window.setup (width = 800, height = 800)
 
     #maze = np.array([[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15],[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15]])
     #maze = np.array([[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15]])
     #world = Maze(maze = maze, grid_height = 50, grid_width = 50)
-    world = Maze(grid_height = 50, grid_width = 50, num_rows = 30, num_cols = 30, wall_prob = 0.4, random_seed = 0)
+    world = Maze(grid_height = 50, grid_width = 50, num_rows = 20, num_cols = 20, wall_prob = 0.4, random_seed = 0)
 
+    x = np.random.uniform(0, world.width)
+    y = np.random.uniform(0, world.height)
+    bob = Robot(x = x, y = y)
 
+    '''
     particles = list()
     for i in range(100):
         x = np.random.uniform(0, world.width)
         y = np.random.uniform(0, world.height)
         particles.append(Particle(x = x, y = y))
-
-
-
-
-
-
+    '''
     world.show_maze()
-    world.show_particles(particles = particles)
-    window.exitonclick()
+    while True:
+        world.show_robot(robot = bob)
+        bob.move(maze = world)
+
+
+
+
+
+
+    #world.show_particles(particles = particles)
+    #window.exitonclick()
 
 
 
