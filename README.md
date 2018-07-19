@@ -82,8 +82,7 @@ $ python main.py
 
 ## Demo
 
-[![Particle Filter](http://img.youtube.com/vi/NtXpJRQj3Pg/0.jpg)](https://www.youtube.com/watch?v=NtXpJRQj3Pg "Particle Filter")
-
+[Particle Filter in Maze](https://www.youtube.com/watch?v=NtXpJRQj3Pg&feature=youtu.be)
 
 ## Reference
 
