@@ -82,6 +82,8 @@ $ python main.py
 
 ## Demo
 
+Watch the particle filter in real time on YouTube.
+
 [Particle Filter in Maze](https://www.youtube.com/watch?v=NtXpJRQj3Pg&feature=youtu.be)
 
 
