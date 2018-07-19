@@ -28,7 +28,7 @@ Particle Filter Start | Particle Filter Equilibrated
 * Python 3.6
 * Numpy 1.14
 
-## Usage
+## Usages
 
 The following parameters could be adjusted for the particle filter.
 
@@ -85,12 +85,12 @@ $ python main.py
 [Particle Filter in Maze](https://www.youtube.com/watch?v=NtXpJRQj3Pg&feature=youtu.be)
 
 
-## Reference
+## References
 
 [Particle Filter in Beacons](https://github.com/mjl/particle_filter_demo)
 
 
-## Note
+## Notes
 
 I found that if the number of particles is not sufficiently large, particularly for some complicated environment, such as the maze which looks quite similar in many local regions, and when the sensor is not perfect, sometimes it will take much longer time, after many rounds of particle reinitializations, to get the right location of the turtle. So the number of particles is definitely the most important parameters for particle filter. However, it slows down the computations.
 
