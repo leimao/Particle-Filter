@@ -6,7 +6,7 @@ University of Chicago
 
 ## Introduction
 
-Particle filter is a Monte Carlo algorithm used to solve statistical inference problems. In this project, the turtle location in maze was infered using particle filter. The green turtle is the actual location while the orange turtule is the estimated location. The arrows are particles. Blue arrows stand for low probability particles while red arrows stand for high probability particles. There are four sensors installed on the front, back, left and right of the turtle. The sensors measure its perpendicular distances to the closest walls in four directions, possibly bounded by some sensor limit. 
+Particle filter is a Monte Carlo algorithm used to solve statistical inference problems. In this project, the turtle location and heading direction in maze was infered using particle filter. The green turtle is the actual location while the orange turtule is the estimated location. The arrows are particles. Blue arrows stand for low probability particles while red arrows stand for high probability particles. There are four sensors installed on the front, back, left and right of the turtle. The sensors measure its perpendicular distances to the closest walls in four directions, possibly bounded by some sensor limit. 
 
 Particle Filter Start | Particle Filter Equilibrated
 :-------------------------:|:-------------------------:
@@ -87,7 +87,9 @@ $ python main.py
 
 ## References
 
-[Particle Filter in Beacons](https://github.com/mjl/particle_filter_demo)
+Some of the code in this project were revised from the Particle Filter among Beacons project. But the robot environment is totally different and the sensor measure mechanism is also totally different. The robot in this project could be more clumsy compared to the robot used in the Particle Filter among Beacons project, but the particle filter still inferred the correct location and heading direction.
+
+[Particle Filter among Beacons](https://github.com/mjl/particle_filter_demo)
 
 
 ## Notes
@@ -96,7 +98,7 @@ I found that if the number of particles is not sufficiently large, particularly 
 
 If the number of particles is not sufficiently large, sometimes adjusting the standard deivation of Gaussian kernel might make it converges faster.
 
-Although theoretically it is true, it is amazing to see that the particle filter could infer the heading of turtle correctly even if the sensor measurements do not contain direction information directly.
+Although theoretically it is true, it is amazing to see that the particle filter could infer the heading direction of turtle correctly even if the sensor measurements do not contain direction information directly.
 
 ## To-Do List
 
