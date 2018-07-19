@@ -308,10 +308,13 @@ class Particle(object):
             self.y = 0
         if self.y > self.maze.height:
             self.y = self.maze.height * 0.9999
+        '''
         if self.heading > 360:
             self.heading -= 360
         if self.heading < 0:
             self.heading += 360
+        '''
+        self.heading = self.heading % 360
 
     @property
     def state(self):
@@ -326,6 +329,22 @@ class Particle(object):
     def read_sensor(self, maze):
 
         readings = maze.distance_to_walls(coordinates = (self.x, self.y))
+
+        heading = self.heading % 360
+
+        # Remove the compass from particle
+        if heading >= 45 and heading < 135:
+            readings = readings
+        elif heading >= 135 and heading < 225:
+            readings = readings[-1:] + readings[:-1]
+            #readings = [readings[3], readings[0], readings[1], readings[2]]
+        elif heading >= 225 and heading < 315:
+            readings = readings[-2:] + readings[:-2]
+            #readings = [readings[2], readings[3], readings[0], readings[1]]
+        else:
+            readings = readings[-3:] + readings[:-3]
+            #readings = [readings[1], readings[2], readings[3], readings[0]]
+
         if self.sensor_limit is not None:
             for i in range(len(readings)):
                 if readings[i] > self.sensor_limit:
@@ -424,7 +443,8 @@ class Robot(Particle):
     def read_sensor(self, maze):
 
         # Robot has error in reading the sensor while particles do not.
-        readings = maze.distance_to_walls(coordinates = (self.x, self.y))
+
+        readings = super(Robot, self).read_sensor(maze = maze)
         if self.noisy == True:
             readings = self.add_sensor_noise(x = readings)
 

@@ -74,7 +74,7 @@ def main(window_width, window_height, num_particles, sensor_limit_ratio, grid_he
         dh = heading_new - heading_old
 
         for particle in particles:
-            particle.heading += dh
+            particle.heading = (particle.heading + dh) % 360
             particle.try_move(maze = world, speed = bob.speed)
 
 
@@ -84,8 +84,8 @@ if __name__ == '__main__':
 
     window_width_default = 800
     window_height_default = 800
-    num_particles_default = 1000
-    sensor_limit_ratio_default = 0.2
+    num_particles_default = 3000
+    sensor_limit_ratio_default = 0.3
     grid_height_default = 100
     grid_width_default = 100
     num_rows_default = 25
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     wall_prob_default = 0.25
     random_seed_default = 100
     robot_speed_default = 10
-    kernel_sigma_default = 1000
+    kernel_sigma_default = 500
     particle_show_frequency_default = 10
 
     parser.add_argument('--window_width', type = int, help = 'Window width.', default = window_width_default)
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument('--wall_prob', type = float, help = 'Wall probability of a random maze.', default = wall_prob_default)
     parser.add_argument('--random_seed', type = int, help = 'Random seed for random maze and particle filter.', default = random_seed_default)
     parser.add_argument('--robot_speed', type = int, help = 'Robot movement speed in maze.', default = robot_speed_default)
-    parser.add_argument('--kernel_sigma', type = int, help = 'Sigma for gaussian distance kernel.', default = kernel_sigma_default)
+    parser.add_argument('--kernel_sigma', type = int, help = 'Standard deviation for Gaussian distance kernel.', default = kernel_sigma_default)
     parser.add_argument('--particle_show_frequency', type = int, help = 'Frequency of showing particles on maze.', default = particle_show_frequency_default)
 
     argv = parser.parse_args()
