@@ -1,6 +1,16 @@
+'''
+Particle Filter in Maze
+
+Lei Mao
+University of Chicago
+
+dukeleimao@gmail.com
+'''
 
 import numpy as np 
 import turtle
+import bisect
+import argparse
 
 class Maze(object):
 
@@ -88,7 +98,7 @@ class Maze(object):
     def random_maze(self, num_rows, num_cols, wall_prob, random_seed = None):
 
         if random_seed is not None:
-            np.random.seed(0)
+            np.random.seed(random_seed)
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.maze = np.zeros((num_rows, num_cols), dtype = np.int8)
@@ -110,7 +120,7 @@ class Maze(object):
         Return:
         (up, right, down, left)
         '''
-        cell_value = self.maze[tuple(cell)]
+        cell_value = self.maze[cell[0], cell[1]]
         return (cell_value & 1 == 0, cell_value & 2 == 0, cell_value & 4 == 0, cell_value & 8 == 0)
 
     def distance_to_walls(self, coordinates):
@@ -122,39 +132,39 @@ class Maze(object):
 
         x, y = coordinates
 
-        i = y // self.grid_height
-        j = x // self.grid_width
+        i = int(y // self.grid_height)
+        j = int(x // self.grid_width)
         d1 = y - y // self.grid_height * self.grid_height
         while self.permissibilities(cell = (i,j))[0]:
             i -= 1
             d1 += self.grid_height
 
-        i = y // self.grid_height
-        j = x // self.grid_width
+        i = int(y // self.grid_height)
+        j = int(x // self.grid_width)
         d2 = self.grid_width - (x - x // self.grid_width * self.grid_width)
         while self.permissibilities(cell = (i,j))[1]:
             j += 1
             d2 += self.grid_width
 
-        i = y // self.grid_height
-        j = x // self.grid_width
+        i = int(y // self.grid_height)
+        j = int(x // self.grid_width)
         d3 = self.grid_height - (y - y // self.grid_height * self.grid_height)
         while self.permissibilities(cell = (i,j))[2]:
             i += 1
             d3 += self.grid_height
 
-        i = y // self.grid_height
-        j = x // self.grid_width
+        i = int(y // self.grid_height)
+        j = int(x // self.grid_width)
         d4 = x - x // self.grid_width * self.grid_width
         while self.permissibilities(cell = (i,j))[3]:
             j -= 1
             d4 += self.grid_width
 
-        return (d1, d2, d3, d4)
+        return [d1, d2, d3, d4]
 
     def show_maze(self):
 
-        turtle.setworldcoordinates(0, self.height * 1.005, self.width * 1.005, 0)
+        turtle.setworldcoordinates(0, 0, self.width * 1.005, self.height * 1.005)
 
         wally = turtle.Turtle()
         wally.speed(0)
@@ -201,38 +211,73 @@ class Maze(object):
 
     def weight_to_color(self, weight):
 
-        return "#%02x00%02x" % (int(weight * 255), int((1 - weight) * 255))
+        return '#%02x00%02x' % (int(weight * 255), int((1 - weight) * 255))
 
 
-    def show_particles(self, particles):
+    def show_particles(self, particles, show_frequency = 10):
 
-        # Clear the particle stamps from the last update
-        turtle.clearstamps()
         turtle.shape('tri')
 
-        for particle in particles:
-            turtle.setposition((particle.x, particle.y))
-            turtle.setheading(90 + particle.heading)
-            turtle.color(self.weight_to_color(particle.weight))
-            turtle.stamp()
+        for i, particle in enumerate(particles):
+            if i % show_frequency == 0:
+                turtle.setposition((particle.x, particle.y))
+                turtle.setheading(90 - particle.heading)
+                turtle.color(self.weight_to_color(particle.weight))
+                turtle.stamp()
+        
+        turtle.update()
 
-    def show_robot(self, robot):
-        turtle.clearstamps()
-        turtle.color("green")
+    def show_estimated_location(self, particles):
+        '''
+        Show average weighted mean location of the particles.
+        '''
+
+        x_accum = 0
+        y_accum = 0
+        heading_accum = 0
+        weight_accum = 0
+
+        num_particles = len(particles)
+
+        for particle in particles:
+
+            weight_accum += particle.weight
+            x_accum += particle.x * particle.weight
+            y_accum += particle.y * particle.weight
+            heading_accum += particle.heading * particle.weight
+
+        if weight_accum == 0:
+
+            return False
+
+        x_estimate = x_accum / weight_accum
+        y_estimate = y_accum / weight_accum
+        heading_estimate = heading_accum / weight_accum
+
+        turtle.color('orange')
+        turtle.setposition(x_estimate, y_estimate)
+        turtle.setheading(90 - heading_estimate)
         turtle.shape('turtle')
-        turtle.shapesize(0.7, 0.7)
-        turtle.setposition((robot.x, robot.y))
-        turtle.setheading(90 + robot.heading)
         turtle.stamp()
         turtle.update()
 
+    def show_robot(self, robot):
 
+        turtle.color('green')
+        turtle.shape('turtle')
+        turtle.shapesize(0.7, 0.7)
+        turtle.setposition((robot.x, robot.y))
+        turtle.setheading(90 - robot.heading)
+        turtle.stamp()
+        turtle.update()
 
+    def clear_objects(self):
+        turtle.clearstamps()
 
 
 class Particle(object):
 
-    def __init__(self, x, y, heading = None, weight = 1, noisy = False):
+    def __init__(self, x, y, maze, heading = None, weight = 1.0, sensor_limit = None, noisy = False):
 
         if heading is None:
             heading = np.random.uniform(0,360)
@@ -241,21 +286,52 @@ class Particle(object):
         self.y = y
         self.heading = heading
         self.weight = weight
+        self.maze = maze
+        self.sensor_limit = sensor_limit
+
+        if noisy:
+            self.x = self.add_noise(self.x)
+            self.y = self.add_noise(self.y)
+            self.heading = self.add_noise(self.heading)
+
+        self.fix_invalid_particles()
+
+
+    def fix_invalid_particles(self):
+
+        # Fix invalid particles
+        if self.x < 0:
+            self.x = 0
+        if self.x > self.maze.width:
+            self.x = self.maze.width * 0.9999
+        if self.y < 0:
+            self.y = 0
+        if self.y > self.maze.height:
+            self.y = self.maze.height * 0.9999
+        if self.heading > 360:
+            self.heading -= 360
+        if self.heading < 0:
+            self.heading += 360
 
     @property
     def state(self):
 
         return (self.x, self.y, self.heading)
 
+    def add_noise(self, x, z = 0.05):
+
+        std = abs(x) * z / 2
+        return x + np.random.normal(0, std)
+
     def read_sensor(self, maze):
 
-        return maze.distance_to_walls(coordinates = (self.x, self.y))
+        readings = maze.distance_to_walls(coordinates = (self.x, self.y))
+        if self.sensor_limit is not None:
+            for i in range(len(readings)):
+                if readings[i] > self.sensor_limit:
+                    readings[i] = self.sensor_limit
 
-    '''
-    def move(self, dx, dy):
-        self.x += dx
-        self.y += dy
-    '''
+        return readings
 
     def try_move(self, speed, maze, noisy = False):
 
@@ -321,12 +397,11 @@ class Particle(object):
             raise Exception('Unexpected collision detection.')
 
 
-
 class Robot(Particle):
 
-    def __init__(self, x, y, heading = None, speed = 0.3, noisy = False):
+    def __init__(self, x, y, maze, heading = None, speed = 1.0, sensor_limit = None, noisy = True):
 
-        super(Robot, self).__init__(x = x, y = y, heading = heading, noisy = noisy)
+        super(Robot, self).__init__(x = x, y = y, maze = maze, heading = heading, sensor_limit = sensor_limit, noisy = noisy)
         self.step_count = 0
         self.noisy = noisy
         self.time_step = 0
@@ -336,31 +411,26 @@ class Robot(Particle):
 
         self.heading = np.random.uniform(0, 360)
 
-    def add_sensor_noise(self, x):
-
-        if not noisy:
-            return x
+    def add_sensor_noise(self, x, z = 0.05):
 
         readings = list(x)
-        for i in range(len(readings)):
-            mu = readings[i]
-            std = readings[i] * 0.05 / 2
-            readings[i] = np.random.normal(mu, sigma)
 
-        readings = tuple(readings)
+        for i in range(len(readings)):
+            std = readings[i] * z / 2
+            readings[i] = readings[i] + np.random.normal(0, std)
 
         return readings
 
-    def read_sensor(self, maze, add_noise):
+    def read_sensor(self, maze):
 
         # Robot has error in reading the sensor while particles do not.
         readings = maze.distance_to_walls(coordinates = (self.x, self.y))
-        readings_noisy = self.add_sensor_noise(x = readings)
+        if self.noisy == True:
+            readings = self.add_sensor_noise(x = readings)
 
-        return readings_noisy
+        return readings
 
     def move(self, maze):
-
 
         while True:
             self.time_step += 1
@@ -369,53 +439,33 @@ class Robot(Particle):
             self.choose_random_direction()
 
 
+class WeightedDistribution(object):
 
+    def __init__(self, particles):
+        
+        accum = 0.0
+        self.particles = particles
+        self.distribution = list()
+        for particle in self.particles:
+            accum += particle.weight
+            self.distribution.append(accum)
 
+    def random_select(self):
 
+        try:
+            return self.particles[bisect.bisect_left(self.distribution, np.random.uniform(0, 1))]
+        except IndexError:
+            # When all particles have weights zero
+            return None
 
+def euclidean_distance(x1, x2):
 
+    return np.linalg.norm(np.asarray(x1) - np.asarray(x2))
 
+def weight_gaussian_kernel(x1, x2, std = 10):
 
-
-
-
-if __name__ == '__main__':
-    
-    window = turtle.Screen()
-    window.setup (width = 800, height = 800)
-
-    #maze = np.array([[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15],[15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15], [15,15,15,15,15,15,15,15]])
-    #maze = np.array([[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15],[15,15,15,15,15]])
-    #world = Maze(maze = maze, grid_height = 50, grid_width = 50)
-    world = Maze(grid_height = 50, grid_width = 50, num_rows = 20, num_cols = 20, wall_prob = 0.4, random_seed = 0)
-
-    x = np.random.uniform(0, world.width)
-    y = np.random.uniform(0, world.height)
-    bob = Robot(x = x, y = y)
-
-    '''
-    particles = list()
-    for i in range(100):
-        x = np.random.uniform(0, world.width)
-        y = np.random.uniform(0, world.height)
-        particles.append(Particle(x = x, y = y))
-    '''
-    world.show_maze()
-    while True:
-        world.show_robot(robot = bob)
-        bob.move(maze = world)
-
-
-
-
-
-
-    #world.show_particles(particles = particles)
-    #window.exitonclick()
-
-
-
-
+    distance = euclidean_distance(x1 = x1, x2 = x2)
+    return np.exp(-distance ** 2 / (2 * std))
 
 
 
