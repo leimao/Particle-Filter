@@ -6,7 +6,7 @@ University of Chicago
 
 ## Introduction
 
-Particle filter is a Monte Carlo algorithm used to solve statistical inference problems. In this project, the turtle location in maze was infered using particle filter. The green turtle is the actual location while the orange turtule is the estimated location. The arrows are particles. Blue arrows stand for low probability particles while red arrows stand for high probability particles.
+Particle filter is a Monte Carlo algorithm used to solve statistical inference problems. In this project, the turtle location in maze was infered using particle filter. The green turtle is the actual location while the orange turtule is the estimated location. The arrows are particles. Blue arrows stand for low probability particles while red arrows stand for high probability particles. The turtle has a sensor of detecting distance to the closest obstacles in four directions, possibly bounded by some sensor limit. The turtle also has a compass knowing which direction is north/south/east/west.
 
 Particle Filter Start | Particle Filter Equilibrated
 :-------------------------:|:-------------------------:
@@ -84,6 +84,12 @@ $ python main.py
 
 [Particle Filter in Maze](https://www.youtube.com/watch?v=NtXpJRQj3Pg&feature=youtu.be)
 
+
 ## Reference
 
 [Particle Filter in Beacons](https://github.com/mjl/particle_filter_demo)
+
+
+## To-Do List
+
+- [ ] Remove compass from turtle.
