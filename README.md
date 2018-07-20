@@ -83,7 +83,7 @@ $ python main.py
 ## Demo
 
 <p align="center">
-    <img src = "./figures/particle_filter_demo.gif" width="100%">
+    <img src = "./figures/particle_filter_demo.gif" width="60%">
 </p>
 
 ## References
