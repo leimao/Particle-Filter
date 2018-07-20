@@ -27,7 +27,7 @@ def main(window_width, window_height, num_particles, sensor_limit_ratio, grid_he
 
     world.show_maze()
 
-    time.sleep(5)
+    time.sleep(7)
     
     while True:
 
