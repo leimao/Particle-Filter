@@ -32,7 +32,7 @@ Particle Filter Start | Particle Filter Equilibrated
 
 The following parameters could be adjusted for the particle filter.
 
-```shell
+```bash
 $ python main.py --help
 usage: main.py [-h] [--window_width WINDOW_WIDTH]
                [--window_height WINDOW_HEIGHT] [--num_particles NUM_PARTICLES]
@@ -76,7 +76,7 @@ optional arguments:
 
 To run particle filter using default parameters, simply run the following command in terminal:
 
-```shell
+```bash
 $ python main.py
 ```
 
