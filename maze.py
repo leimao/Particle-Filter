@@ -208,6 +208,8 @@ class Maze(object):
                 wally.forward(self.grid_height)
                 wally.up()
 
+        turtle.update()
+
 
     def weight_to_color(self, weight):
 
@@ -290,9 +292,10 @@ class Particle(object):
         self.sensor_limit = sensor_limit
 
         if noisy:
-            self.x = self.add_noise(self.x)
-            self.y = self.add_noise(self.y)
-            self.heading = self.add_noise(self.heading)
+            std = max(self.maze.grid_height, self.maze.grid_width) * 0.2
+            self.x = self.add_noise(x = self.x, std = std)
+            self.y = self.add_noise(x = self.y, std = std)
+            self.heading = self.add_noise(x = self.heading, std = 360 * 0.05)
 
         self.fix_invalid_particles()
 
@@ -321,9 +324,8 @@ class Particle(object):
 
         return (self.x, self.y, self.heading)
 
-    def add_noise(self, x, z = 0.05):
+    def add_noise(self, x, std):
 
-        std = abs(x) * z / 2
         return x + np.random.normal(0, std)
 
     def read_sensor(self, maze):

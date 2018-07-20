@@ -25,9 +25,8 @@ def main(window_width, window_height, num_particles, sensor_limit_ratio, grid_he
         y = np.random.uniform(0, world.height)
         particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
 
-    world.show_maze()
-
     time.sleep(1)
+    world.show_maze()
     
     while True:
 

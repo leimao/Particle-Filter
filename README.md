@@ -82,6 +82,10 @@ $ python main.py
 
 ## Demo
 
+```bash
+$ python main.py --num_particles 1000 --kernel_sigma 500 --random_seed 200
+```
+
 <p align="center">
     <img src = "./figures/particle_filter_demo.gif" width="60%">
 </p>
