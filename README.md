@@ -88,9 +88,9 @@ $ python main.py
 
 ## References
 
-Some of the code in this project were revised from the Particle Filter among Beacons project. But the robot environment is totally different and the sensor measure mechanism is also totally different. The robot in this project could be more clumsy compared to the robot used in the Particle Filter among Beacons project, but the particle filter still inferred the correct location and heading direction.
+Some of the code in this project were revised from the Beacon Based Particle Filter project. But the robot environment is totally different and the sensor measure mechanism is also totally different. The robot in this project could be more clumsy compared to the robot used in the Beacon Based Particle Filter project, but the particle filter still inferred the correct location and heading direction.
 
-[Particle Filter among Beacons](https://github.com/mjl/particle_filter_demo)
+* [Beacon Based Particle Filter](https://github.com/mjl/particle_filter_demo)
 
 
 ## Notes
@@ -104,3 +104,9 @@ Although theoretically it is true, it is amazing to see that the particle filter
 ## To-Do List
 
 - [x] Remove compass from turtle.
+
+## Miscellaneous
+
+* [Particle Filter Online](http://www.claudeonthe.net/ai/particle_filter/particle_filter.html)
+
+An interesting online particle filter that uses similar designs to mine. 
