@@ -82,10 +82,9 @@ $ python main.py
 
 ## Demo
 
-Watch the particle filter in real time on YouTube.
-
-[Particle Filter in Maze](https://www.youtube.com/watch?v=NtXpJRQj3Pg&feature=youtu.be)
-
+<p align="center">
+    <img src = "./figures/particle_filter_demo.gif" width="100%">
+</p>
 
 ## References
 

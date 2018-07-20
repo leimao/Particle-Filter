@@ -2,6 +2,7 @@
 import numpy as np 
 import turtle
 import argparse
+import time
 
 from maze import Maze, Particle, Robot, WeightedDistribution, weight_gaussian_kernel
 
@@ -25,6 +26,8 @@ def main(window_width, window_height, num_particles, sensor_limit_ratio, grid_he
         particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
 
     world.show_maze()
+
+    time.sleep(5)
     
     while True:
 
