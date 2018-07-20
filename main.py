@@ -27,7 +27,7 @@ def main(window_width, window_height, num_particles, sensor_limit_ratio, grid_he
 
     world.show_maze()
 
-    time.sleep(7)
+    time.sleep(1)
     
     while True:
 
@@ -39,7 +39,6 @@ def main(window_width, window_height, num_particles, sensor_limit_ratio, grid_he
             particle.weight = weight_gaussian_kernel(x1 = readings_robot, x2 = readings_particle, std = kernel_sigma)
             particle_weight_total += particle.weight
 
-        world.show_robot(robot = bob)
         world.show_particles(particles = particles, show_frequency = particle_show_frequency)
         world.show_robot(robot = bob)
         world.show_estimated_location(particles = particles)
